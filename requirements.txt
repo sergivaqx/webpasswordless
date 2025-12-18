@@ -3,3 +3,4 @@ psycopg2-binary
 fido2
 Pillow
 django-csp
+dj-database-url
