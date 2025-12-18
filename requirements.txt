@@ -1,1 +1,5 @@
-Nel
+django
+psycopg2-binary
+fido2
+Pillow
+django-csp
