@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Registro</title>
+    <style>body { font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; background: #f0f2f5; } .box { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 300px; text-align: center; } input { width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; } button { width: 100%; padding: 10px; background: #28a745; color: white; border: none; cursor: pointer; } </style>
+</head>
+<body>
+    <div class="box">
+        <h2>Crear Cuenta</h2>
+        <input type="text" id="username" placeholder="Elige un usuario">
+        <button onclick="register()">Registrar Huella / FaceID / Passkey</button>
+        <p id="msg" style="color: red; margin-top: 10px;"></p>
+        <p><a href="{% url 'login' %}">¿Ya tienes cuenta? Entrar</a></p>
+    </div>
+
+    <script>
+        // Helpers Base64
+        const bufferDecode = (value) => Uint8Array.from(atob(value.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
+        const bufferEncode = (value) => btoa(String.fromCharCode(...new Uint8Array(value))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+
+        async function register() {
+            const username = document.getElementById('username').value;
+            const msg = document.getElementById('msg');
+            
+            try {
+                // 1. Obtener opciones del servidor
+                const resp = await fetch('{% url "reg_options" %}', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+                    body: JSON.stringify({ username })
+                });
+                const options = await resp.json();
+                if(options.status === 'failed') throw new Error(options.message);
+
+                options.publicKey.challenge = bufferDecode(options.publicKey.challenge);
+                options.publicKey.user.id = bufferDecode(options.publicKey.user.id);
+
+                // 2. Crear credencial en dispositivo
+                const cred = await navigator.credentials.create({ publicKey: options.publicKey });
+
+                // 3. Enviar al servidor
+                const verifyResp = await fetch('{% url "reg_verify" %}', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+                    body: JSON.stringify({
+                        id: cred.id,
+                        rawId: bufferEncode(cred.rawId),
+                        type: cred.type,
+                        response: {
+                            attestationObject: bufferEncode(cred.response.attestationObject),
+                            clientDataJSON: bufferEncode(cred.response.clientDataJSON)
+                        }
+                    })
+                });
+
+                const result = await verifyResp.json();
+                if (result.status === 'ok') {
+                    window.location.href = "{% url 'dashboard' %}";
+                } else {
+                    msg.innerText = result.message;
+                }
+            } catch (e) {
+                console.error(e);
+                msg.innerText = "Error: " + e.message;
+            }
+        }
+    </script>
+</body>
+</html>

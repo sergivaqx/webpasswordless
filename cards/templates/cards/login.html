@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Acceso Passwordless - Magic Cards Album</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #eef2f5; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .login-container { background: white; padding: 40px; border-radius: 10px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 320px; }
+        h1 { color: #333; margin-bottom: 20px; }
+        input { width: 100%; padding: 10px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .btn-bio { background: #007bff; color: white; border: none; padding: 12px; width: 100%; border-radius: 5px; cursor: pointer; font-size: 16px; display: flex; justify-content: center; gap: 10px; }
+        .btn-bio:hover { background: #0056b3; }
+        .links { margin-top: 20px; font-size: 14px; }
+        .icon { font-size: 1.2em; }
+    </style>
+</head>
+<body>
+
+    <div class="login-container">
+        <h1>Magic Cards Album</h1>
+        <p>Ingresa sin contraseñas</p>
+        
+        <div id="auth-form">
+            <input type="text" id="username" placeholder="Tu nombre de usuario" autocomplete="username">
+            <button class="btn-bio" onclick="startLogin()">
+                <span class="icon">👆</span> Usar Huella / FaceID / Passkey
+            </button>
+        </div>
+
+        <p id="status" style="color: red; margin-top: 15px; font-size: 0.9em;"></p>
+
+        <div class="links">
+            ¿No tienes cuenta? <a href="{% url 'register' %}">Registrarse</a>
+        </div>
+    </div>
+
+    <script>
+    // Funciones auxiliares Base64URL
+    const bufferDecode = (value) => Uint8Array.from(atob(value.replace(/-/g, "+").replace(/_/g, "/")), c => c.charCodeAt(0));
+    const bufferEncode = (value) => btoa(String.fromCharCode(...new Uint8Array(value))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=/g, "");
+
+    async function startLogin() {
+        const username = document.getElementById('username').value;
+        const status = document.getElementById('status');
+        
+        if(!username) { status.innerText = "Por favor ingresa tu usuario."; return; }
+        
+        status.style.color = "#666";
+        status.innerText = "Consultando servidor...";
+
+        try {
+            // 1. Obtener el desafío (challenge) del servidor
+            const resp = await fetch('{% url "auth_options" %}', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+                body: JSON.stringify({ username: username })
+            });
+            const options = await resp.json();
+
+            // === AQUÍ ESTABA EL ERROR ===
+            // Antes intentábamos leer options.publicKey sin revisar si falló.
+            if (options.status === "failed") {
+                status.style.color = "red";
+                status.innerText = options.message; // Ej: "Usuario no encontrado"
+                return; // Detenemos la ejecución
+            }
+
+            // Convertir strings base64 del servidor a Buffers para el navegador
+            options.publicKey.challenge = bufferDecode(options.publicKey.challenge);
+            
+            // Convertir IDs de credenciales permitidas
+            options.publicKey.allowCredentials.forEach(c => {
+                c.id = bufferDecode(c.id);
+            });
+
+            status.innerText = "Pon tu huella / FaceID / Passkey...";
+
+            // 2. Pedir al usuario que ponga la huella
+            const credential = await navigator.credentials.get({ publicKey: options.publicKey });
+
+            // 3. Enviar la firma de vuelta al servidor para verificar
+            const verificationResp = await fetch('{% url "auth_verify" %}', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json', 'X-CSRFToken': '{{ csrf_token }}'},
+                body: JSON.stringify({
+                    username: username, // Enviamos usuario para facilitar búsqueda en server
+                    id: credential.id,
+                    rawId: bufferEncode(credential.rawId),
+                    response: {
+                        clientDataJSON: bufferEncode(credential.response.clientDataJSON),
+                        authenticatorData: bufferEncode(credential.response.authenticatorData),
+                        signature: bufferEncode(credential.response.signature),
+                        userHandle: credential.response.userHandle ? bufferEncode(credential.response.userHandle) : null
+                    }
+                })
+            });
+
+            const result = await verificationResp.json();
+            
+            if (result.status === 'ok') {
+                status.style.color = "green";
+                status.innerText = "¡Éxito! Entrando...";
+                window.location.href = "{% url 'dashboard' %}";
+            } else {
+                status.style.color = "red";
+                status.innerText = "Error: " + result.message;
+            }
+
+        } catch (err) {
+            console.error(err);
+            status.style.color = "red";
+            status.innerText = "Error técnico o cancelado por usuario.";
+        }
+    }
+</script>
+</body>
+</html>

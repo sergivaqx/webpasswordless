@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bóveda Segura - Magic Cards Album</title>
+    <style>
+        /* Estilos Simples y Limpios */
+        :root { --primary: #6b4c9a; --bg: #f4f6f8; --card-bg: #ffffff; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); margin: 0; padding: 20px; }
+        
+        /* Header */
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        h1 { color: #333; font-size: 1.5rem; display: flex; align-items: center; gap: 10px; }
+        .secure-badge { background: #d4edda; color: #155724; padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; border: 1px solid #c3e6cb; }
+        
+        /* Botones */
+        .btn { text-decoration: none; padding: 10px 20px; border-radius: 5px; font-weight: 500; transition: 0.2s; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-logout { background: #e2e6ea; color: #333; border: none; cursor: pointer; }
+        
+        /* Grid del Álbum */
+        .album-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); 
+            gap: 20px; 
+        }
+        
+        /* Tarjeta Individual */
+        .card-item { 
+            background: var(--card-bg); 
+            border-radius: 8px; 
+            overflow: hidden; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+            border: 1px solid #eee;
+        }
+        .card-item:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        
+        /* Contenedor de Imagen (Protege contra layout shifts) */
+        .image-container {
+            width: 100%;
+            height: 280px; /* Altura fija para uniformidad */
+            background: #eee;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        /* La imagen descifrada */
+        .image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            /* Efecto de desvanecido al cargar para elegancia */
+            animation: fadeIn 0.5s;
+        }
+
+        /* Marca de "Encriptado" visual */
+        .lock-icon {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.6);
+            color: white;
+            padding: 5px;
+            border-radius: 50%;
+            font-size: 12px;
+        }
+
+        .card-info { padding: 15px; }
+        .card-info h3 { margin: 0 0 5px 0; font-size: 1rem; color: #333; }
+        .card-info small { color: #888; font-size: 0.8rem; }
+        
+        /* Estado vacío */
+        .empty-state { text-align: center; color: #888; margin-top: 50px; grid-column: 1 / -1; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>
+            <span>Bóveda de {{ request.user.username }}</span>
+            <span class="secure-badge">Seguro</span>
+        </h1>
+        
+        <div style="display: flex; gap: 10px; align-items: center;">
+            <a href="{% url 'upload' %}" class="btn btn-primary">+ Subir Carta</a>
+            
+            <form action="{% url 'logout' %}" method="post">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-logout">Cerrar Sesión</button>
+            </form>
+        </div>
+    </header>
+
+    <main class="album-grid">
+        {% for card in cards %}
+            <article class="card-item">
+                <div class="image-container">
+                    <img src="{% url 'card_image' card.id %}" alt="{{ card.card_name }}" loading="lazy">
+                    
+                    <div class="lock-icon" title="Archivo cifrado en disco">🔒</div>
+                </div>
+                
+                <div class="card-info">
+                    <h3>{{ card.card_name }}</h3>
+                    <small>Subida el {{ card.created_at|date:"d M Y" }}</small>
+                </div>
+                <div class="card">
+                    <form action="{% url 'delete_card' card.id %}" method="POST" onsubmit="return confirm('¿Estás seguro de querer borrar esta carta?');">
+                        {% csrf_token %}
+                        <button type="submit" style="background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                            🗑️ Borrar
+                        </button>
+                    </form>
+                </div>
+            </article>
+        {% empty %}
+            <div class="empty-state">
+                <p>Tu bóveda está vacía.</p>
+                <p>Sube tu primera carta cifrada para comenzar.</p>
+            </div>
+        {% endfor %}
+    </main>
+
+</body>
+</html>
