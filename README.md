@@ -19,6 +19,7 @@
 	- Ejecutar los siguientes comandos en la consola, dentro de la carpeta donde va a quedar la app:
 		- *django-admin startproject magic_album .*
 		- *python manage.py startapp cards*
+  	- Se procede a copiar los archivos del proyecto descargados de este github en la carpeta donde quedará la app.
 	- Crear BD en postgresql que se llame magic_album
 	- Insertar los datos de conexión a la misma en la seccion databases en el archivo .env, el cual debes crear para el proyecto (en caso de ejecutar el proyecto local) o agregar las variables en el ambiente de producción.
 	- Ejecutar el siguiente comando para crear las tablas en la BD:
@@ -31,3 +32,4 @@
 		- *mkcert localhost* Este comando genera el certificado y la llave.
 	- Por último, ejecutar el servidor django con el comando, recuerde cambiar los nombres localhost+1.pem y localhost+1-key.pem por los nombres de los archivos generados en el paso anterior:
 		*python manage.py runserver_plus --cert-file localhost+1.pem --key-file localhost+1-key.pem*
+
