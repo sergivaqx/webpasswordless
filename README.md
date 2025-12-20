@@ -1,5 +1,7 @@
 # **Trabajo Final Análisis de Malware**
 
+Codigo fuente del trabajo final para la maestria de análisis de malware. Este enlace lleva a un video de su funcionamiento: *https://youtu.be/nwjALwAeY3I*
+
 1. Estructura
 	- Framework: Django 5.0+
 	- BD: PostgreSQL
@@ -32,4 +34,5 @@
 		- *mkcert localhost* Este comando genera el certificado y la llave.
 	- Por último, ejecutar el servidor django con el comando, recuerde cambiar los nombres localhost+1.pem y localhost+1-key.pem por los nombres de los archivos generados en el paso anterior:
 		*python manage.py runserver_plus --cert-file localhost+1.pem --key-file localhost+1-key.pem*
+
 
