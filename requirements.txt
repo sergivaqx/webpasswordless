@@ -5,4 +5,4 @@ Pillow
 django-csp
 dj-database-url
 python-dotenv
-
+django-extensions
