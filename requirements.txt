@@ -4,3 +4,5 @@ fido2
 Pillow
 django-csp
 dj-database-url
+python-dotenv
+
