@@ -16,7 +16,12 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # Ponlo en True para desarrollar, False para producción
 DEBUG = False 
 
-ALLOWED_HOSTS = ['webpasswordless.onrender.com']
+ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]', 'webpasswordless.onrender.com']
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://webpasswordless.onrender.com',
+    'https://localhost:8000'
+]
 
 # 3. Aplicaciones Instaladas
 INSTALLED_APPS = [
@@ -116,4 +121,5 @@ ENCRYPTION_KEY = os.getenv('ENCRYPTION_KEY')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 
