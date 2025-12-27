@@ -16,7 +16,7 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # Ponlo en True para desarrollar, False para producción
 DEBUG = False 
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '[::1]']
+ALLOWED_HOSTS = ['webpasswordless.onrender.com']
 
 # 3. Aplicaciones Instaladas
 INSTALLED_APPS = [
@@ -111,4 +111,5 @@ AUTH_USER_MODEL = 'cards.User'
 ENCRYPTION_KEY = os.getenv('ENCRYPTION_KEY')
 
 # 14. Tipo de campo para Auto-incremento
+
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
