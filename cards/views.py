@@ -17,7 +17,16 @@ from fido2.webauthn import PublicKeyCredentialRpEntity, PublicKeyCredentialUserE
 from fido2.utils import websafe_decode, websafe_encode
 
 # Configuración del Servidor FIDO2
-rp = PublicKeyCredentialRpEntity(id="localhost", name="Magic Album")
+# Si DEBUG es True, estamos en local. Si es False, estamos en Render/Producción.
+if settings.DEBUG:
+    RP_ID = "localhost"
+    EXPECTED_ORIGIN = "https://localhost:8000"
+else:
+    # Tu dominio real en Render
+    RP_ID = "webpasswordless.onrender.com"
+    EXPECTED_ORIGIN = f"https://{RP_ID}"
+    
+rp = PublicKeyCredentialRpEntity(id=RP_ID, name="Magic Album")
 server = Fido2Server(rp)
 
 User = get_user_model()
@@ -298,4 +307,5 @@ def webauthn_auth_verify(request):
         traceback.print_exc()
         return JsonResponse({"status": "failed", "message": str(e)})
     
+
     #NEl
